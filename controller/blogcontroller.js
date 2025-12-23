@@ -125,3 +125,16 @@ exports.editblog = async (req, res) => {
   }
 };
 
+exports.getAllBlogsAdmin = async (req, res) => {
+  try {
+    const allBlogs = await blogs.find().sort({ createdAt: -1 }); // fetch all blogs, latest first
+    res.status(200).json(allBlogs);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error", error: err });
+  }
+};
+
+
+
+

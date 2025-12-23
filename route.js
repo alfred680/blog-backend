@@ -4,6 +4,8 @@ const blogcontroller=require("./controller/blogcontroller")
 const jwtmiddleware=require("./middleware/jwtmiddleware")
 
 const multerConfig = require("./middleware/mullltermiddleware")
+const reportcountroller=require("./controller/reportcontroller")
+const adminjwtcountroller=require("./middleware/jwtadminmiddleware")
 
 
 const route=new express.Router()
@@ -33,8 +35,18 @@ route.put("/edit-blog/:id",jwtmiddleware,blogcontroller.editblog)
 
 // buy premiem
 route.post("/buy-premium",jwtmiddleware,usercountroller.makePremiumPaymentController)
-
+// active premiem true
 route.post("/active-premiem",jwtmiddleware,usercountroller.activatePremiumController)
+// get report blog
+route.get("/reportblog",adminjwtcountroller,reportcountroller.getAllReports)
 
+
+// report blog
+route.post("/report/:id",jwtmiddleware,reportcountroller.reportBlog)
+// delete blog reported
+route.delete("/admindelete/:id",adminjwtcountroller,reportcountroller.deleteBlogAdmin)
+
+
+route.get("/admin-allblog",jwtmiddleware,blogcontroller.getAllBlogsAdmin)
 
 module.exports=route
