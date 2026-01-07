@@ -6,6 +6,10 @@ const jwtmiddleware=require("./middleware/jwtmiddleware")
 const multerConfig = require("./middleware/mullltermiddleware")
 const reportcountroller=require("./controller/reportcontroller")
 const adminjwtcountroller=require("./middleware/jwtadminmiddleware")
+const chatcontroller=require("./controller/chatboxcountroller")
+const commentController=require("./controller/commantboxcontroller")
+const chatbotcontroller=require("./controller/chatbotcontroller")
+const jwtAdminMiddleware = require("./middleware/jwtadminmiddleware")
 
 
 const route=new express.Router()
@@ -46,7 +50,44 @@ route.post("/report/:id",jwtmiddleware,reportcountroller.reportBlog)
 // delete blog reported
 route.delete("/admindelete/:id",adminjwtcountroller,reportcountroller.deleteBlogAdmin)
 
-
+// admin all blog
 route.get("/admin-allblog",jwtmiddleware,blogcontroller.getAllBlogsAdmin)
+
+route.put('/follow/:userId', jwtmiddleware,usercountroller.followUser);
+
+// search users for starting new chats
+route.get('/users/search', jwtmiddleware, usercountroller.searchUsers);
+
+route.post("/message", jwtmiddleware,chatcontroller.sendMessage);
+
+// Conversation endpoints
+route.post("/conversations", jwtmiddleware, chatcontroller.createConversation); // create chat box using blogId
+route.get("/conversations", jwtmiddleware, chatcontroller.getConversations); // list user's conversations
+route.get("/conversations/:conversationId/messages", jwtmiddleware, chatcontroller.getConversationMessages); // messages within a conversation
+route.delete("/conversations/:conversationId", jwtmiddleware, chatcontroller.deleteConversation); // delete conversation and its messages
+route.delete("/messages/:messageId", jwtmiddleware, chatcontroller.deleteMessage); // delete single message
+
+route.get("/blogs/:blogId/receiver",jwtmiddleware, chatcontroller.getChatReceiver);
+
+route.get("/messages/:userId",jwtmiddleware,chatcontroller.getMessages);
+// add comment
+route.post("/add-comment",jwtmiddleware,commentController.addComment);
+// get comments
+route.get("/get-comments/:blogId", commentController.getComments);
+// reply comment
+route.put("/reply-comment/:commentId", jwtmiddleware,commentController.replyToComment);
+
+// delete comment
+route.delete("/comment/:id",jwtmiddleware,commentController.deleteComment);
+
+// delete comment by author
+route.delete("/comments/:id",jwtmiddleware,commentController.deleteCommentauthor)
+
+// chatbot
+route.post("/chat/answer",jwtmiddleware,chatbotcontroller.answerQuestion);
+
+
+
+route.get("/chat/all",jwtAdminMiddleware,chatbotcontroller.getAllChats);
 
 module.exports=route

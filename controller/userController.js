@@ -1,6 +1,7 @@
 const Users = require('../model/usermodel')
 const jwt = require('jsonwebtoken')
 const stripe = require('stripe')(process.env.stripeKey);
+const mongoose = require("mongoose");
 
 // register
 exports.registercountroller = async (req, res) => {
@@ -37,7 +38,7 @@ exports.logincontroller = async (req, res) => {
         const existinguser = await Users.findOne({ email })
         if (existinguser) {
             if (existinguser.password === password) {
-                const token = jwt.sign({ userMail: existinguser.email, isPremium: existinguser.isPremium },process.env.sk)
+                const token = jwt.sign({ userMail: existinguser.email, isPremium: existinguser.isPremium, userId: existinguser._id, },process.env.sk)
                 res.status(200).json({ existinguser, token })
             }else{
                 res.status(400).json("password do not match")
@@ -147,3 +148,88 @@ exports.activatePremiumController = async (req, res) => {
         res.status(500).json(err)
     }
 }
+
+exports.followUser = async (req, res) => {
+  try {
+    const { userMail } = req.payload;
+    const { userId } = req.params;
+
+    const currentUser = await Users.findOne({ email: userMail });
+    if (!currentUser)
+      return res.status(404).json({ message: "Current user not found" });
+
+    if (currentUser._id.toString() === userId) {
+      return res.status(400).json({ message: "You cannot follow yourself" });
+    }
+
+    const targetUser = await Users.findById(userId);
+    if (!targetUser)
+      return res.status(404).json({ message: "Target user not found" });
+
+    const isFollowing = currentUser.following.some(
+      id => id.toString() === userId
+    );
+
+    if (isFollowing) {
+      // ✅ UNFOLLOW (ObjectId safe)
+      await Users.updateOne(
+        { _id: currentUser._id },
+        { $pull: { following: new mongoose.Types.ObjectId(userId) } }
+      );
+
+      await Users.updateOne(
+        { _id: targetUser._id },
+        { $pull: { followers: currentUser._id } }
+      );
+
+    } else {
+      // ✅ FOLLOW (ObjectId safe)
+      await Users.updateOne(
+        { _id: currentUser._id },
+        { $addToSet: { following: new mongoose.Types.ObjectId(userId) } }
+      );
+
+      await Users.updateOne(
+        { _id: targetUser._id },
+        { $addToSet: { followers: currentUser._id } }
+      );
+    }
+
+    const updatedCurrentUser = await Users.findById(currentUser._id);
+    const updatedTarget = await Users.findById(userId);
+
+    return res.status(200).json({
+      message: isFollowing ? "User unfollowed" : "User followed",
+      followed: !isFollowing,
+      following: updatedCurrentUser.following,
+      followingCount: updatedCurrentUser.following.length,
+      followersCount: updatedTarget.followers.length
+    });
+
+  } catch (err) {
+    console.error("Follow error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+    
+  }
+};
+
+// Search users by username or email (exclude current user)
+exports.searchUsers = async (req, res) => {
+  try {
+    const q = req.query.q || "";
+    const userMail = req.payload.userMail;
+    const currentUser = await Users.findOne({ email: userMail });
+
+    const regex = new RegExp(q, 'i');
+    const filter = q ? { $or: [{ username: regex }, { email: regex }] } : {};
+    if (currentUser) filter._id = { $ne: currentUser._id };
+
+    const users = await Users.find(filter).select('username email profile').limit(20);
+    res.status(200).json(users);
+  } catch (err) {
+    console.error('Search users error:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+

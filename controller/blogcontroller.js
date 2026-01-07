@@ -16,6 +16,9 @@ exports.addblogcontroller = async (req, res) => {
 
     const email = req.payload.userMail
     console.log(email);
+    const userId = req.payload.userId
+   console.log(userId);
+   
     
 
     // Duplicate title check
@@ -31,7 +34,8 @@ exports.addblogcontroller = async (req, res) => {
       premiem,
       payment,
       uploadimg,
-      userMail:email
+      userMail:email,
+      author: userId
     })
 
     await blog.save()
@@ -124,7 +128,7 @@ exports.editblog = async (req, res) => {
     res.status(500).json({error: "internal server error",details: err.message});
   }
 };
-
+// all blog admin
 exports.getAllBlogsAdmin = async (req, res) => {
   try {
     const allBlogs = await blogs.find().sort({ createdAt: -1 }); // fetch all blogs, latest first

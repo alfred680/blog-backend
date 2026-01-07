@@ -1,4 +1,4 @@
-const jwt=require('jsonwebtoken')
+const jwt = require('jsonwebtoken')
 
 const jwtmiddleware = (req, res, next) => {
 
@@ -18,19 +18,20 @@ const jwtmiddleware = (req, res, next) => {
 
     const token = parts[1]
     console.log(token);
-    
+
     try {
         const jwtResponse = jwt.verify(token, process.env.sk)
         console.log(jwtResponse)
 
 
-       req.payload ={
+        req.payload = {
+            userId: jwtResponse.userId,
             userMail: jwtResponse.userMail,
-             isPremium: jwtResponse.isPremium
-       }
+            isPremium: jwtResponse.isPremium
+        }
 
-        
-        
+
+
         return next()
 
 
@@ -41,4 +42,4 @@ const jwtmiddleware = (req, res, next) => {
 
 }
 
-module.exports=jwtmiddleware
+module.exports = jwtmiddleware

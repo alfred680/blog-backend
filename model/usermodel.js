@@ -28,7 +28,16 @@ const userSchema=new mongouse.Schema({
     isPremium:{
         type:Boolean,
         default:false
-    }
-})
-const Users=mongouse.model("Users",userSchema)
+    },
+     followers: [
+      { type: mongouse.Schema.Types.ObjectId, ref: "users" }
+    ],
+    following: [
+      { type: mongouse.Schema.Types.ObjectId, ref: "users" }
+    ]
+  },
+  { timestamps: true }
+);
+
+const Users=mongouse.model("users",userSchema)
 module.exports=Users
